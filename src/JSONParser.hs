@@ -1,6 +1,5 @@
 module JSONParser (parse, JSONValue(..), tokenize, splitFirstExceptEscape, splitNotNumber, JSONToken(..)) where
 import Data.Char (isDigit)
-import Data.Function
 
 data JSONValue
   = JSONString String

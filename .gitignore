@@ -1,0 +1,52 @@
+# Cabal build artifacts
+dist/
+dist-newstyle/
+cabal.project.local
+cabal.project.local.*
+*.cabal-sandbox/
+*.ghc.environment.*
+*.ghc.env.*
+*.ghc.pkgdb/
+*.hpc/
+*.stack-work/
+.stack-work/
+.sandboxes/
+.sandbox/
+*.tix
+
+# GHC build artifacts
+*.hi
+*.o
+*.dyn_hi
+*.dyn_o
+*.prof
+*.aux
+*.hp
+*.eventlog
+*.dump-*
+*.tmp
+*.log
+
+# Binary files
+*.so
+*.dylib
+*.dll
+*.a
+*.exe
+*.out
+
+# Package database
+packagedb/
+build/
+sdist/
+tmp/
+
+# VSCode
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Others
+*.swp
+*~

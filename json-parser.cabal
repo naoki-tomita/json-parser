@@ -1,0 +1,27 @@
+cabal-version:   3.8
+name:            json-parser
+version:         0.1.0.0
+license:         MIT
+license-file:    LICENSE
+maintainer:      6903308+naoki-tomita@users.noreply.github.com
+author:          naoki.tomita
+build-type:      Simple
+extra-doc-files: CHANGELOG.md
+
+library
+    exposed-modules:  JSONParser
+    hs-source-dirs:   src
+    default-language: GHC2021
+    ghc-options:      -Wall
+    build-depends:    base ^>=4.18.3.0
+
+test-suite test
+    type:             exitcode-stdio-1.0
+    main-is:          Main.hs
+    hs-source-dirs:   test
+    default-language: GHC2021
+    ghc-options:      -Wall
+    build-depends:
+        base ^>=4.18.3.0,
+        HUnit ^>=1.6,
+        json-parser

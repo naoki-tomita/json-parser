@@ -18,7 +18,7 @@ parse input = let tokens = tokenize input
                   _ -> error "Unexpected token"
 
 parseTokens :: [JSONToken] -> (JSONValue, [JSONToken])
-parseTokens (JSONTokenBraceOpen:tx) = parseObject(JSONTokenBraceOpen:tx)
+parseTokens (JSONTokenBraceOpen:tx) = parseObject tx
 parseTokens (JSONTokenText t:tx) = (JSONString t, tx)
 parseTokens (JSONTokenNumber t:tx) = (JSONNumber t, tx)
 parseTokens (JSONTokenBoolean t:tx) = (JSONBool t, tx)
@@ -26,16 +26,14 @@ parseTokens (t:_) = error("Unexpected token " ++ show t)
 parseTokens [] = (JSONNull, [])
 
 parseObject :: [JSONToken] -> (JSONValue, [JSONToken])
-parseObject (JSONTokenBraceOpen:tx) = go tx []
+parseObject tx = go tx []
   where
-    go (JSONTokenBraceClose:tx) acc = (JSONObject(reverse acc), tx)
+    go :: [JSONToken] -> [(String, JSONValue)] -> (JSONValue, [JSONToken])
+    go (JSONTokenBraceClose:tx1) acc = (JSONObject(reverse acc), tx1)
+    go (JSONTokenComma:tx1) acc = go tx1 acc
     go ((JSONTokenText key):JSONTokenColon:tx1) acc = let (value, tx2) = parseTokens tx1
-                                                      in case tx2 of
-                                                        (JSONTokenBraceClose:tx3) -> go (JSONTokenBraceClose:tx3) ((key, value):acc)
-                                                        (JSONTokenComma:tx3) -> go tx3 ((key, value):acc)
-                                                        _ -> error ("Unexpected token in object" ++ show tx2 ++ show value)
-    go t tx = error ("Unexpected token in object" ++ show t ++ show tx)
-parseObject _ = error "Error"
+                                                      in go tx2 ((key, value):acc)
+    go t tx1 = error ("Unexpected token in object" ++ show t ++ show tx1)
 
 data JSONToken
   = JSONTokenBraceOpen

@@ -1,38 +1,45 @@
-以下、Haskellらしさ（合意的な総称: 安全・合成可能・総称的）と実装の堅牢性の観点での短評と最小パッチです。
+以下、Haskellらしさ（合意的な総称:
+安全・合成可能・総称的）と実装の堅牢性の観点での短評と最小パッチです。
 
 良い点
 
-* JSONValue のADTが明確で、Eq/Show導出も適切。
-* 小さな関数に分割され、HUnitで検証できる。
-* -Wall/GHC2021 の設定は良い。
+- JSONValue のADTが明確で、Eq/Show導出も適切。
+- 小さな関数に分割され、HUnitで検証できる。
+- -Wall/GHC2021 の設定は良い。
 
 気になる点・改善提案
 
-* 総称性/安全性:
-    * tokenize で undefined、read の失敗可能性、splitFirstExceptEscape の head/tail 使用が部分関数で危険。
-    * 予期しない入力で error/undefined に落ちる箇所を減らし、最終的には Either を返せる設計が望ましい。
-* トークナイズ:
-    * 空白は ' ' のみスキップ。isSpace を使ってタブ/改行も許可したい。
-    * 数字: 複数の '.' を許してしまい read で落ちる可能性。少なくとも '.' は1回に制限。
-    * 文字列: エスケープ状態の有限状態機械で実装すると安全（末尾バックスラッシュで落ちない）。
-    * 不正文字で undefined はやめ、説明的なエラーに。
-* パーサ:
-    * JSONTokenNull を生成しているが parseTokens に分岐がない（null の解析失敗）。
-    * parseTokens [] が JSONNull を返すのは驚きやすい（将来的にはエラー/EOF扱いが無難）。
-    * エラーメッセージは場所特定が容易になるように文言を改善可能。
-* 命名:
-    * JSONTokenText は実質文字列。JSONTokenString の方が意味的に自然（互換性のため今回は据え置き）。
-* その他:
-    * Data.Function は未使用。削除。
+- 総称性/安全性:
+  - tokenize で undefined、read の失敗可能性、splitFirstExceptEscape の
+    head/tail 使用が部分関数で危険。
+  - 予期しない入力で error/undefined に落ちる箇所を減らし、最終的には Either
+    を返せる設計が望ましい。
+- トークナイズ:
+  - 空白は ' ' のみスキップ。isSpace を使ってタブ/改行も許可したい。
+  - 数字: 複数の '.' を許してしまい read で落ちる可能性。少なくとも '.'
+    は1回に制限。
+  - 文字列:
+    エスケープ状態の有限状態機械で実装すると安全（末尾バックスラッシュで落ちない）。
+  - 不正文字で undefined はやめ、説明的なエラーに。
+- パーサ:
+  - JSONTokenNull を生成しているが parseTokens に分岐がない（null の解析失敗）。
+  - parseTokens [] が JSONNull
+    を返すのは驚きやすい（将来的にはエラー/EOF扱いが無難）。
+  - エラーメッセージは場所特定が容易になるように文言を改善可能。
+- 命名:
+  - JSONTokenText は実質文字列。JSONTokenString
+    の方が意味的に自然（互換性のため今回は据え置き）。
+- その他:
+  - Data.Function は未使用。削除。
 
 最小修正パッチ（現行テストを壊さず堅牢性を向上）
 
-* 空白に isSpace を使用。
-* 数字の '.' を1回に制限。
-* splitFirstExceptEscape を全関数化（部分関数削除）。
-* JSONTokenNull を parseTokens で処理。
-* undefined を説明的な error に変更。
-* 未使用 import の削除。
+- 空白に isSpace を使用。
+- 数字の '.' を1回に制限。
+- splitFirstExceptEscape を全関数化（部分関数削除）。
+- JSONTokenNull を parseTokens で処理。
+- undefined を説明的な error に変更。
+- 未使用 import の削除。
 
 ```hs
 module JSONParser (parse, JSONValue(..), tokenize, splitFirstExceptEscape, splitNotNumber, JSONToken(..)) where
@@ -133,7 +140,35 @@ splitFirstExceptEscape ch = go False []
 
 今後の拡張（必要に応じて）
 
-* tokenize/parse を Either String にし、エラー位置情報を付与。
-* megaparsec/attoparsec などのパーサコンビネータで保守性とエラー表示を改善。
-* JSON数値の完全対応（指数部、先頭ゼロ規則）、配列の実装、厳密な空白/改行対応。
-* 公開APIの整理（テスト専用の内部関数は Internal モジュールへ移動など）。
+- tokenize/parse を Either String にし、エラー位置情報を付与。
+- megaparsec/attoparsec などのパーサコンビネータで保守性とエラー表示を改善。
+- JSON数値の完全対応（指数部、先頭ゼロ規則）、配列の実装、厳密な空白/改行対応。
+- 公開APIの整理（テスト専用の内部関数は Internal モジュールへ移動など）。
+- 配列に対応
+
+---
+
+要点
+
+- 階層の分離は良い
+  - tokenize が文字列→トークン列、parseTokens がトークン列→値 という二層は妥当。
+  - ただし parse
+    は「1つの値を読む→入力をすべて消費したことを確認」という薄いオーケストレータに徹すると明確。
+- 「1値だけ読む」責務の明確化
+  - parseTokens
+    は実質「先頭の1値を読む」関数なので、名前とシグネチャでそれを表すと読みやすい（例:
+    parseValue）。
+  - オブジェクト用の parseObject は「{
+    を既に消費済み」という前提にし、先頭トークンのマッチング責務を parseValue
+    に集約すると綺麗。
+- エントリポイントの二段構え
+  - ユーザー向け: parseStrict（全部消費を確認）。
+  - 内部/合成向け: parseValue（残りトークンを返す）。
+  - さらに発展させるなら Either でエラーを返す parseEither も用意。
+
+発展案
+
+- parseEither :: String -> Either String JSONValue を追加し、parse
+  は後方互換のためにそれを使って error に束ねる。
+- parseStrict と parsePartial（残りも返す）を用意して用途で使い分け。
+- 位置情報付きのエラー型を導入し、tokenize/parseValue で Either 連鎖にする。

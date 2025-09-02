@@ -1,5 +1,6 @@
-module JSONParser (parse, JSONValue(..), tokenize, splitFirstExceptEscape, splitUntilNotNumber, JSONToken(..)) where
+module JSONParser (parse, JSONValue(..), tokenize, splitFirstExceptEscape, splitUntilNotNumber, JSONToken(..), stringify) where
 import Data.Char (isDigit, isSpace)
+import Data.List (intercalate, isPrefixOf)
 
 data JSONValue
   = JSONString String
@@ -9,6 +10,28 @@ data JSONValue
   | JSONArray [JSONValue]
   | JSONObject [(String, JSONValue)]
   deriving (Show, Eq)
+
+
+stringify :: JSONValue -> String
+stringify (JSONString text) = "\"" ++ replace "\"" "\\\"" text ++ "\""
+stringify (JSONObject kvList) = "{" ++ intercalate "," (map kvStringify kvList) ++ "}"
+stringify (JSONBool bool) = if bool then "true" else "false"
+stringify (JSONNumber num) = show num
+stringify (JSONArray arr) = "[" ++ intercalate "," (map stringify arr) ++ "]"
+stringify _ = ""
+
+kvStringify :: (String, JSONValue) -> String
+kvStringify (k, v) = "\"" ++ k ++ "\"" ++ ":" ++ stringify v
+
+replace :: String -> String -> String -> String
+replace old new = go
+  where
+    go :: String -> String
+    go str
+      | str == "" = ""
+      | old == "" = str
+      | old `isPrefixOf` str = new ++ go (drop (length old) str)
+      | otherwise = head str : go (tail str)
 
 parse :: String -> JSONValue
 parse input = let tokens = tokenize input

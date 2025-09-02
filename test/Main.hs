@@ -1,5 +1,5 @@
 import Test.HUnit
-import JSONParser (splitFirstExceptEscape, tokenize, splitUntilNotNumber, JSONValue(..), JSONToken(..), parse)
+import JSONParser (splitFirstExceptEscape, tokenize, splitUntilNotNumber, JSONValue(..), JSONToken(..), parse, stringify)
 import qualified System.Exit as Exit
 
 splitFirstExceptEscapeTest1 :: Test
@@ -40,18 +40,37 @@ tokenizeTest1 = TestCase (assertEqual
 
 parseTest1 :: Test
 parseTest1 = TestCase (assertEqual "パースできる"
-(JSONObject [
-("foo ", JSONString "bar"),
-("hoge", JSONString "fu\"ga"),
-("a", JSONNumber (-23.2376)),
+  (JSONObject [
+    ("foo ", JSONString "bar"),
+    ("hoge", JSONString "fu\"ga"),
+    ("a", JSONNumber (-23.2376)),
     ("array", JSONArray [
       JSONNumber 1,
       JSONString "string",
       JSONObject [("key", JSONString "value")],
       JSONBool False
     ]),
-("xxxxxx", JSONBool True)
-]) (parse json))
+    ("xxxxxx", JSONBool True)
+  ]) (parse json))
+
+
+stringifiedJson :: String
+stringifiedJson = "{\"foo \":\"bar\",\"hoge\":\"fu\\\"ga\",\"a\":-23.2376,\"array\":[1.0,\"string\",{\"key\":\"value\"},false],\"xxxxxx\":true}"
+jsonObject :: JSONValue
+jsonObject = JSONObject [
+  ("foo ", JSONString "bar"),
+  ("hoge", JSONString "fu\"ga"),
+  ("a", JSONNumber (-23.2376)),
+  ("array", JSONArray [
+    JSONNumber 1,
+    JSONString "string",
+    JSONObject [("key", JSONString "value")],
+    JSONBool False
+  ]),
+  ("xxxxxx", JSONBool True)]
+stringifyTest1 :: Test
+stringifyTest1 = TestCase (assertEqual "stringifyできる"
+  stringifiedJson (stringify jsonObject))
 
 main :: IO ()
 main = do
@@ -62,7 +81,8 @@ main = do
     splitUntilNotNumberTest1,
     splitUntilNotNumberTest2,
     tokenizeTest1,
-    parseTest1
+    parseTest1,
+    stringifyTest1
     ])
   if errors result + failures result > 0
     then Exit.exitFailure

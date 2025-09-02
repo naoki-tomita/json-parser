@@ -1,5 +1,7 @@
 import Test.HUnit
-import JSON (splitFirstExceptEscape, tokenize, splitUntilNotNumber, JSONValue(..), JSONToken(..), parse, stringify)
+import JSON (parse, stringify)
+import Types (JSONValue(..), JSONToken(..))
+import Tokenizer (splitFirstExceptEscape, splitUntilNotNumber, tokenize)
 import qualified System.Exit as Exit
 
 splitFirstExceptEscapeTest1 :: Test

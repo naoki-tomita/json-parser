@@ -9,7 +9,7 @@ build-type:      Simple
 extra-doc-files: CHANGELOG.md
 
 library
-    exposed-modules:  JSONParser
+    exposed-modules:  JSON
     hs-source-dirs:   src
     default-language: GHC2021
     ghc-options:      -Wall

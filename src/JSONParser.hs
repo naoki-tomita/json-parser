@@ -1,5 +1,5 @@
-module JSONParser (parse, JSONValue(..), tokenize, splitFirstExceptEscape, splitNotNumber, JSONToken(..)) where
-import Data.Char (isDigit)
+module JSONParser (parse, JSONValue(..), tokenize, splitFirstExceptEscape, splitUntilNotNumber, JSONToken(..)) where
+import Data.Char (isDigit, isSpace)
 
 data JSONValue
   = JSONString String
@@ -64,8 +64,8 @@ tokenize (x:xs)
   | otherwise = undefined
 tokenize [] = []
 
-splitNotNumber :: String -> (String, String)
-splitNotNumber = go
+splitUntilNotNumber :: String -> (String, String)
+splitUntilNotNumber = go
   where
     go "" = ("", "")
     go (c:cs)

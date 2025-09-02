@@ -1,5 +1,5 @@
 import Test.HUnit
-import JSONParser (splitFirstExceptEscape, tokenize, splitNotNumber, JSONValue(..), JSONToken(..), parse)
+import JSONParser (splitFirstExceptEscape, tokenize, splitUntilNotNumber, JSONValue(..), JSONToken(..), parse)
 import qualified System.Exit as Exit
 
 splitFirstExceptEscapeTest1 :: Test
@@ -12,11 +12,11 @@ splitFirstExceptEscapeTest2 = TestCase (assertEqual "文字が見つからなけ
 splitFirstExceptEscapeTest3 :: Test
 splitFirstExceptEscapeTest3 = TestCase (assertEqual "エスケープされた文字は無視される" ("abcdxy", "z") (splitFirstExceptEscape 'd' "abc\\dxydz"))
 
-splitNotNumberTest1 :: Test
-splitNotNumberTest1 = TestCase (assertEqual "文字列から数字部分と数字以外の部分で分割する" ("213", "ab12") (splitNotNumber "213ab12"))
+splitUntilNotNumberTest1 :: Test
+splitUntilNotNumberTest1 = TestCase (assertEqual "文字列から数字部分と数字以外の部分で分割する" ("213", "ab12") (splitUntilNotNumber "213ab12"))
 
-splitNotNumberTest2 :: Test
-splitNotNumberTest2 = TestCase (assertEqual "文字列から数字（小数点を含む）部分と数字以外の部分で分割する" ("21.3", "ab12") (splitNotNumber "21.3ab12"))
+splitUntilNotNumberTest2 :: Test
+splitUntilNotNumberTest2 = TestCase (assertEqual "文字列から数字（小数点を含む）部分と数字以外の部分で分割する" ("21.3", "ab12") (splitUntilNotNumber "21.3ab12"))
 
 json :: String
 json = "{ \"foo \": \"bar\", \"hoge\": \"fu\\\"ga\", \"a\": -23.2376, \"xxxxxx\": true }"
@@ -40,8 +40,8 @@ main = do
     splitFirstExceptEscapeTest1,
     splitFirstExceptEscapeTest2,
     splitFirstExceptEscapeTest3,
-    splitNotNumberTest1,
-    splitNotNumberTest2,
+    splitUntilNotNumberTest1,
+    splitUntilNotNumberTest2,
     tokenizeTest1,
     parseTest1
     ])

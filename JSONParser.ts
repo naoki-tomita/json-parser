@@ -74,7 +74,7 @@ function tokenize(input: string): string[] {
     return [`"${before}"`, ...tokenize(after)];
   }
   if (c.match(/[\-\.0-9]/)) {
-    const [before, after] = splitNotNumber(cs);
+    const [before, after] = splitUntilNotNumber(cs);
     return [c + before, ...tokenize(after)];
   }
   if (c + cs.slice(0, 3) === "true") return ["true", ...tokenize(cs.slice(3))];
@@ -83,10 +83,10 @@ function tokenize(input: string): string[] {
   throw Error(`Unexpected token 「${c}」, ${cs}`);
 }
 
-function splitNotNumber(txt: string): [string, string] {
+function splitUntilNotNumber(txt: string): [string, string] {
   const [c, cs] = [txt[0], txt.slice(1)];
   if (c.match(/[\-\.0-9]/)) {
-    const [before, after] = splitNotNumber(cs);
+    const [before, after] = splitUntilNotNumber(cs);
     return [c + before, after];
   }
   return ["", txt];

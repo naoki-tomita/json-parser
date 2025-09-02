@@ -1,4 +1,4 @@
-module JSONParser (parse, JSONValue(..), tokenize, splitFirstExceptEscape, splitUntilNotNumber, JSONToken(..), stringify) where
+module JSON (parse, JSONValue(..), tokenize, splitFirstExceptEscape, splitUntilNotNumber, JSONToken(..), stringify) where
 import Data.Char (isDigit, isSpace)
 import Data.List (intercalate, isPrefixOf)
 

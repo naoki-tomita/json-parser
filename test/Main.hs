@@ -23,12 +23,12 @@ json = "{ \"foo \": \"bar\", \"hoge\": \"fu\\\"ga\", \"a\": -23.2376, \"xxxxxx\"
 tokenizeTest1 :: Test
 tokenizeTest1 = TestCase (assertEqual
                             "トークン化できる"
-                            [JSONTokenBraceOpen,
+                            [JSONTokenOpenBrace,
                               JSONTokenText "foo ", JSONTokenColon, JSONTokenText "bar", JSONTokenComma,
                               JSONTokenText "hoge", JSONTokenColon, JSONTokenText "fu\"ga", JSONTokenComma,
                               JSONTokenText "a", JSONTokenColon, JSONTokenNumber (-23.2376), JSONTokenComma,
                               JSONTokenText "xxxxxx", JSONTokenColon, JSONTokenBoolean True,
-                              JSONTokenBraceClose]
+                              JSONTokenCloseBrace]
                             (tokenize json))
 
 parseTest1 :: Test

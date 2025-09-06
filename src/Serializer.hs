@@ -1,6 +1,7 @@
 module Serializer (stringify) where
-import Types (JSONValue (..))
+
 import Data.List (intercalate, isPrefixOf)
+import Types (JSONValue (..))
 
 stringify :: JSONValue -> String
 stringify (JSONString text) = "\"" ++ replace "\"" "\\\"" text ++ "\""
@@ -18,7 +19,7 @@ replace old new = go
   where
     go :: String -> String
     go str
-      | str == "" = ""
-      | old == "" = str
-      | old `isPrefixOf` str = new ++ go (drop (length old) str)
-      | otherwise = head str : go (tail str)
+        | str == "" = ""
+        | old == "" = str
+        | old `isPrefixOf` str = new ++ go (drop (length old) str)
+        | otherwise = head str : go (tail str)

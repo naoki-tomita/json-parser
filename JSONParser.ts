@@ -12,6 +12,7 @@ type JSONValue =
   | JSONBool
   | JSONNull;
 
+
 function parse(text: string): JSONValue {
   const tokens = tokenize(text);
   const [obj, rest] = parseTokens(tokens);
@@ -21,24 +22,24 @@ function parse(text: string): JSONValue {
   return obj;
 }
 
-function parseTokens(tokens: string[]): [JSONValue, string[]] {
+function parseTokens(tokens: Token[]): [JSONValue, Token[]] {
   const [t, ...tx] = tokens;
-  if (t === "{") return parseObject(tx);
-  if (t.startsWith(`"`)) return [parseText(t), tx];
-  if (t.match(/^[\-\.0-9]/)) return [parseFloat(t), tx];
-  if (t === "true" || t === "false") return [t === "true", tx];
-  if (t === "null") return [null, tx];
+  if (t instanceof TokenOpenBrace) return parseObject(tx);
+  if (t instanceof TokenText) return [t.value, tx];
+  if (t instanceof TokenNumber) return [t.value, tx];
+  if (t instanceof TokenBoolean) return [t.value, tx];
+  if (t instanceof TokenNull) return [null, tx];
   throw Error(`Unexpected token ${t}, ${tx}`);
 }
 
-function parseObject(tokens: string[]): [JSONObject, string[]] {
-  function go(tokens: string[], acc: JSONObject): [JSONObject, string[]] {
+function parseObject(tokens: Token[]): [JSONObject, Token[]] {
+  function go(tokens: Token[], acc: JSONObject): [JSONObject, Token[]] {
     const [t, ...tx] = tokens;
-    if (t === "}") return [acc, tx];
-    if (t === ",") return go(tx, acc);
+    if (t instanceof TokenCloseBrace) return [acc, tx];
+    if (t instanceof TokenComma) return go(tx, acc);
     const [t1, ...tx1] = tx;
-    if (t.startsWith(`"`) && t1 === ":") {
-      const key = parseText(t);
+    if (t instanceof TokenText && t1 instanceof TokenColon) {
+      const key = t.value;
       const [value, tx2] = parseTokens(tx1);
       return go(tx2, { ...acc, [key]: value });
     }
@@ -61,25 +62,53 @@ function parseText(textToken: string): JSONText {
   return rest;
 }
 
-function tokenize(input: string): string[] {
+
+type Token =
+  | TokenOpenBrace
+  | TokenCloseBrace
+  | TokenColon
+  | TokenComma
+  | TokenText
+  | TokenNumber
+  | TokenBoolean
+  | TokenNull;
+
+class TokenBase {
+  toString() {
+    if ((this as any).value != null) {
+      return `${this.constructor.name} ${(this as any).value}`;
+    }
+    return this.constructor.name;
+  }
+}
+class TokenOpenBrace extends TokenBase {}
+class TokenCloseBrace extends TokenBase {}
+class TokenColon extends TokenBase {}
+class TokenComma extends TokenBase {}
+class TokenText extends TokenBase { constructor(public value: string) { super(); } }
+class TokenNumber extends TokenBase { constructor(public value: number) { super(); } }
+class TokenBoolean extends TokenBase { constructor(public value: boolean) { super(); } }
+class TokenNull extends TokenBase {}
+
+function tokenize(input: string): Token[] {
   const [c, cs] = [input[0], input.slice(1)];
   if (input === "") return [];
-  if (c === "{") return ["{", ...tokenize(cs)];
-  if (c === "}") return ["}", ...tokenize(cs)];
-  if (c === ":") return [":", ...tokenize(cs)];
+  if (c === "{") return [new TokenOpenBrace(), ...tokenize(cs)];
+  if (c === "}") return [new TokenCloseBrace(), ...tokenize(cs)];
+  if (c === ":") return [new TokenColon(), ...tokenize(cs)];
   if (c === " " || c === "\n") return [...tokenize(cs)];
-  if (c === ",") return [",", ...tokenize(cs)];
+  if (c === ",") return [new TokenComma(), ...tokenize(cs)];
   if (c === '"') {
     const [before, after] = splitFirstExceptEscape('"', cs);
-    return [`"${before}"`, ...tokenize(after)];
+    return [new TokenText(before), ...tokenize(after)];
   }
   if (c.match(/[\-\.0-9]/)) {
     const [before, after] = splitUntilNotNumber(cs);
-    return [c + before, ...tokenize(after)];
+    return [new TokenNumber(parseFloat(c + before)), ...tokenize(after)];
   }
-  if (c + cs.slice(0, 3) === "true") return ["true", ...tokenize(cs.slice(3))];
-  if (c + cs.slice(0, 4) === "false") return ["false", ...tokenize(cs.slice(4))];
-  if (c + cs.slice(0, 3) === "null") return ["null", ...tokenize(cs.slice(3))];
+  if (c + cs.slice(0, 3) === "true") return [new TokenBoolean(true), ...tokenize(cs.slice(3))];
+  if (c + cs.slice(0, 4) === "false") return [new TokenBoolean(false), ...tokenize(cs.slice(4))];
+  if (c + cs.slice(0, 3) === "null") return [new TokenNull(), ...tokenize(cs.slice(3))];
   throw Error(`Unexpected token 「${c}」, ${cs}`);
 }
 
@@ -99,15 +128,13 @@ function splitFirstExceptEscape(ch: string, txt: string): [string, string] {
     if (c === ch) return ["", cs];
     if (c === "\\") {
       const [before, after] = go(cs.slice(1));
-      return [c + cs[0] + before, after];
+      return [cs[0] + before, after];
     }
     const [before, after] = go(cs);
     return [c + before, after];
   }
   return go(txt);
 }
-
-
 
 const json = JSON.stringify({
   "foo ": "bar",
@@ -123,35 +150,35 @@ const json = JSON.stringify({
 const result = tokenize(json);
 
 const expected = [
-  "{",
-  `"foo "`,
-  ":",
-  `"bar"`,
-  ",",
-  `"hoge"`,
-  ":",
-  `"fu\\"ga"`,
-  ",",
-  `"a"`,
-  ":",
-  "-23.2376",
-  ",",
-  `"xxxxxx"`,
-  ":",
-  "true",
-  ",",
-  `"parent"`,
-  ":",
-  "{",
-  `"child"`,
-  ":",
-  `"value"`,
-  "}",
-  ",",
-  `"null"`,
-  ":",
-  "null",
-  "}",
+  new TokenOpenBrace(),
+  new TokenText("foo "),
+  new TokenColon(),
+  new TokenText("bar"),
+  new TokenComma(),
+  new TokenText("hoge"),
+  new TokenColon(),
+  new TokenText(`fu"ga`),
+  new TokenComma(),
+  new TokenText("a"),
+  new TokenColon(),
+  new TokenNumber(-23.2376),
+  new TokenComma(),
+  new TokenText("xxxxxx"),
+  new TokenColon(),
+  new TokenBoolean(true),
+  new TokenComma(),
+  new TokenText("parent"),
+  new TokenColon(),
+  new TokenOpenBrace(),
+  new TokenText("child"),
+  new TokenColon(),
+  new TokenText("value"),
+  new TokenCloseBrace(),
+  new TokenComma(),
+  new TokenText("null"),
+  new TokenColon(),
+  new TokenNull(),
+  new TokenCloseBrace(),
 ];
 assertEquals(result, expected);
 
@@ -164,11 +191,11 @@ function assert(x: boolean) {
   }
 }
 
-function assertEquals(left: string[], right: string[]) {
+function assertEquals(left: Token[], right: Token[]) {
   for (let i = 0; i < left.length; i++) {
     const currentL = left[i];
     const currentR = right[i];
-    if (currentL === currentR) {
+    if (currentL.toString() === currentR.toString()) {
       continue;
     }
     throw Error(

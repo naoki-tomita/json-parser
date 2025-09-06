@@ -1,23 +1,23 @@
-module Types (JSONValue(..), JSONToken(..)) where
+module Types (JSONValue (..), JSONToken (..)) where
 
 data JSONValue
-  = JSONString String
-  | JSONNumber Double
-  | JSONBool Bool
-  | JSONNull
-  | JSONArray [JSONValue]
-  | JSONObject [(String, JSONValue)]
-  deriving (Show, Eq)
+    = JSONString String
+    | JSONNumber Double
+    | JSONBool Bool
+    | JSONNull
+    | JSONArray [JSONValue]
+    | JSONObject [(String, JSONValue)]
+    deriving (Show, Eq)
 
 data JSONToken
-  = JSONTokenOpenBrace -- {
-  | JSONTokenCloseBrace -- }
-  | JSONTokenColon
-  | JSONTokenComma
-  | JSONTokenText String
-  | JSONTokenNumber Double
-  | JSONTokenBoolean Bool
-  | JSONTokenNull
-  | JSONTokenOpenBracket -- [
-  | JSONTokenCloseBracket -- ]
-  deriving (Show, Eq)
+    = JSONTokenOpenBrace -- {
+    | JSONTokenCloseBrace -- }
+    | JSONTokenColon
+    | JSONTokenComma
+    | JSONTokenText String
+    | JSONTokenNumber Double
+    | JSONTokenBoolean Bool
+    | JSONTokenNull
+    | JSONTokenOpenBracket -- [
+    | JSONTokenCloseBracket -- ]
+    deriving (Show, Eq)
